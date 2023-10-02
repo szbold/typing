@@ -1,6 +1,6 @@
 module typing
 
-go 1.23
+go 1.21.1
 
 require (
 	github.com/fatih/color v1.15.0 // indirect

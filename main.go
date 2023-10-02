@@ -7,11 +7,13 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+  "math"
 )
 
 const url string = "http://random-word-api.herokuapp.com/word"
 
-func typingGame(words []string, start time.Time) {
+func typingGame(words []string) (int, float32) {
+  var start time.Time
 	input := strings.Join(words, " ")
 	color.Yellow(input)
 
@@ -45,6 +47,10 @@ func typingGame(words []string, start time.Time) {
 			continue
 		}
 
+    if i == 0 {
+      start = time.Now()
+    }
+
 		if char == inputted_char[0] {
 			correctCount++
 			correct.Print(inputted_char)
@@ -54,9 +60,16 @@ func typingGame(words []string, start time.Time) {
 		}
 	}
 
-	fmt.Printf("Speed: %v WPM", time.Since(start))
+  end := time.Since(start).Minutes()
 
-	fmt.Printf("\nScore: %.2f\n", float32(correctCount)/float32(correctCount+incorrectCount)*100)
+  wpm := int(math.Floor(float64(len(words)) * (1 / end)))
+  accuracy := float32(correctCount)/float32(correctCount+incorrectCount)*100
+
+	fmt.Printf("\nSpeed: %v WPM\n", wpm)
+
+	fmt.Printf("Accuracy: %.2f\n", accuracy)
+
+  return wpm, accuracy
 }
 
 func main() {
@@ -69,5 +82,19 @@ func main() {
 
 	words := fetchWords(numberOfWords, wordLength)
 
-	typingGame(words, time.Now())
+  wpm, accuracy := typingGame(words)
+
+  err = save(wpm, accuracy)
+
+  if err != nil {
+    fmt.Println("Could not save file", err)
+  }
+
+  avgWpm, avgAccuracy, err := getAverage()
+
+  if err != nil {
+    fmt.Println("Error retrieving data", err)
+  }
+
+  fmt.Printf("Average wpm: %v\nAverage accuracy: %v\n", avgWpm, avgAccuracy)
 }
